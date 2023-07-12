@@ -1,34 +1,17 @@
-Sub StoreDataAndSavePDF()
+Private Sub btnStoreAndSavePDF_Click()
+    ' Get project name, purchase order, and load number from cells
     Dim projectName As String
     Dim purchaseOrder As String
     Dim loadNumber As String
-    Dim masterCoilNumbers() As String
-    Dim i As Integer
     
-    ' Store project name, purchase order, and load number
-    projectName = Range("D4").Value
-    purchaseOrder = Range("D5").Value
-    loadNumber = Range("D6").Value
+    projectName = Range("E26").Value
+    purchaseOrder = Range("E27").Value
+    loadNumber = InputBox("Enter Load Number:")
     
-    ' Prompt for master coil numbers
-    ReDim masterCoilNumbers(1 To 6) ' Initialize the array to hold up to 6 entries
-    i = 1 ' Initialize the counter
-    
-    Do While i <= 6
-        Dim userInput As String
-        userInput = InputBox("Enter Master Coil Number " & i & " (leave blank to finish):")
-        
-        If userInput = "" Then
-            Exit Do ' Exit the loop if input is blank
-        Else
-            masterCoilNumbers(i) = userInput ' Store the input in the array
-            i = i + 1 ' Increment the counter
-        End If
-    Loop
-    
-    ' Determine the actual number of master coil entries
-    Dim numMasterCoils As Integer
-    numMasterCoils = i - 1
+    ' Add project name, purchase order, and load number to cells E26, E27, and E28
+    Range("E26").Value = projectName
+    Range("E27").Value = purchaseOrder
+    Range("E28").Value = loadNumber
     
     ' Create the file path and save the PDF copies
     Dim basePath As String
@@ -41,26 +24,11 @@ Sub StoreDataAndSavePDF()
     MkDir "P:\NEXTracker Documentation\" & projectName & "\PO-" & purchaseOrder & "\LD-" & loadNumber
     On Error GoTo 0
     
-    ' Create master coil folders and save PDF copies
-    Dim folderPath As String
-    Dim j As Integer
+    ' Save the sheet as a PDF with the load number and the current date
+    Dim fileName As String
+    fileName = basePath & "Certificate of Compliance LD-" & loadNumber & " " & Format(Date, "yyyy-mm-dd") & ".pdf"
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=fileName, Quality:=xlQualityStandard
     
-    For j = 1 To numMasterCoils
-        If masterCoilNumbers(j) <> "" Then
-            folderPath = basePath & "MC-" & masterCoilNumbers(j) & "\"
-            
-            ' Create the folder if it doesn't exist
-            On Error Resume Next
-            MkDir folderPath
-            On Error GoTo 0
-            
-            ' Update cell D7 with the current master coil number
-            Range("D7").Value = masterCoilNumbers(j)
-            
-            ' Save the sheet as a PDF with the master coil number from cell D7 and the current date
-            Dim fileName As String
-            fileName = folderPath & "Certificate of Compliance MC-" & Range("D7").Value & " " & Format(Date, "yyyy-mm-dd") & ".pdf"
-            ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=fileName, Quality:=xlQualityStandard
-        End If
-    Next j
+    ' Clear load number cell
+    Range("E28").ClearContents
 End Sub
