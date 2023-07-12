@@ -1,0 +1,34 @@
+Private Sub btnStoreAndSavePDF_Click()
+    ' Get project name, purchase order, and load number from cells
+    Dim projectName As String
+    Dim purchaseOrder As String
+    Dim loadNumber As String
+    
+    projectName = Range("E26").Value
+    purchaseOrder = Range("E27").Value
+    loadNumber = InputBox("Enter Load Number:")
+    
+    ' Add project name, purchase order, and load number to cells E26, E27, and E28
+    Range("E26").Value = projectName
+    Range("E27").Value = purchaseOrder
+    Range("E28").Value = loadNumber
+    
+    ' Create the file path and save the PDF copies
+    Dim basePath As String
+    basePath = "P:\NEXTracker Documentation\" & projectName & "\PO-" & purchaseOrder & "\LD-" & loadNumber & "\"
+    
+    ' Create project, purchase order, and load number folders if they don't exist
+    On Error Resume Next
+    MkDir "P:\NEXTracker Documentation\" & projectName
+    MkDir "P:\NEXTracker Documentation\" & projectName & "\PO-" & purchaseOrder
+    MkDir "P:\NEXTracker Documentation\" & projectName & "\PO-" & purchaseOrder & "\LD-" & loadNumber
+    On Error GoTo 0
+    
+    ' Save the sheet as a PDF with the load number and the current date
+    Dim fileName As String
+    fileName = basePath & "Certificate of Compliance LD-" & loadNumber & " " & Format(Date, "yyyy-mm-dd") & ".pdf"
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=fileName, Quality:=xlQualityStandard
+    
+    ' Clear load number cell
+    Range("E28").ClearContents
+End Sub
