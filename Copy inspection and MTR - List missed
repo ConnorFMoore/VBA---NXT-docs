@@ -1,0 +1,94 @@
+Sub CreatePDFAndCopyFolders()
+    Dim projectName As String
+    Dim poNumber As String
+    Dim loadNumber As String
+    Dim folderPath As String
+    Dim pdfFileName As String
+    Dim masterCoilNumbers(1 To 6) As String
+    Dim i As Integer
+    Dim missingOngoingInspections As String
+    Dim missingMTRs As String
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+
+    ' Get project information from cells
+    projectName = Range("E26").Value
+    poNumber = Range("E27").Value
+    loadNumber = Range("E28").Value
+
+    ' Create folder path
+    folderPath = "P:\NEXTracker Documentation\" & projectName & "\PO-" & poNumber & "\LD-" & loadNumber
+
+    ' Create folder if it doesn't exist
+    If Not fso.FolderExists(folderPath) Then
+        fso.CreateFolder folderPath
+    End If
+
+    ' Save active sheet as PDF
+    pdfFileName = "Certificate of Compliance LD-" & loadNumber & " - " & Format(Date, "mmddyyyy")
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=folderPath & "\" & pdfFileName, Quality:=xlQualityStandard
+
+    ' Prompt for master coil numbers
+    For i = 1 To 6
+        masterCoilNumbers(i) = InputBox("Enter Master Coil Number " & i & " (Leave blank to stop input):")
+        If masterCoilNumbers(i) = "" Then Exit For
+    Next i
+
+    ' Initialize missing inspection and MTR lists
+    missingOngoingInspections = ""
+    missingMTRs = ""
+
+    ' Copy folders to LD-load number folder
+    Dim sourceOngoingFolderPath As String
+    Dim sourceMTRFolderPath As String
+    Dim destinationFolderPath As String
+
+    sourceOngoingFolderPath = "P:\QualityControl\NEXTracker\Ongoing Inspections\"
+    sourceMTRFolderPath = "P:\NEXTracker Documentation\MTR Bulk\"
+    destinationFolderPath = folderPath & "\"
+
+    For i = 1 To 6
+        If masterCoilNumbers(i) = "" Then Exit For
+
+        ' Check if ongoing inspection folder exists
+        Dim ongoingInspectionFolder As Object
+        If fso.FolderExists(sourceOngoingFolderPath & "MC-" & masterCoilNumbers(i)) Then
+            Set ongoingInspectionFolder = fso.GetFolder(sourceOngoingFolderPath & "MC-" & masterCoilNumbers(i))
+            ' Copy ongoing inspection folder to destination
+            fso.CopyFolder sourceOngoingFolderPath & "MC-" & masterCoilNumbers(i), destinationFolderPath & "MC-" & masterCoilNumbers(i)
+        Else
+            ' Add missing ongoing inspection to the list
+            missingOngoingInspections = missingOngoingInspections & "MC-" & masterCoilNumbers(i) & vbCrLf
+            ' Create master coil folder in destination
+            fso.CreateFolder destinationFolderPath & "MC-" & masterCoilNumbers(i)
+        End If
+
+        ' Check if MTR document exists
+        Dim mtrFilePattern As String
+        mtrFilePattern = "MTR-MC-" & masterCoilNumbers(i) & "*"
+        Dim mtrFilePath As String
+        mtrFilePath = Dir(sourceMTRFolderPath & mtrFilePattern & ".pdf")
+
+        If mtrFilePath <> "" Then
+            ' Copy MTR document to destination
+            fso.CopyFile sourceMTRFolderPath & mtrFilePath, destinationFolderPath & "MC-" & masterCoilNumbers(i) & "\" & mtrFilePath
+        Else
+            ' Add missing MTR to the list
+            missingMTRs = missingMTRs & "MTR-MC-" & masterCoilNumbers(i) & vbCrLf
+        End If
+    Next i
+
+    ' Display message box with missing inspections and MTRs
+    Dim message As String
+    message = "PDF saved, folders copied, and master coil documents copied successfully!" & vbCrLf & vbCrLf
+
+    If missingOngoingInspections <> "" Then
+        message = message & "The following ongoing inspections were not found: " & vbCrLf & missingOngoingInspections & vbCrLf
+    End If
+
+    If missingMTRs <> "" Then
+        message = message & "The following MTRs were not found: " & vbCrLf & missingMTRs & vbCrLf
+    End If
+
+    MsgBox message
+End Sub
