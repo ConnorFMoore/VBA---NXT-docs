@@ -22,7 +22,7 @@ Sub CreatePDFAndCopyFolders()
     
     ' Save active sheet as PDF
     pdfFileName = "Certificate of Compliance LD-" & loadNumber & " - " & Format(Date, "mmddyyyy")
-    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:=folderPath & "\" & pdfFileName, Quality:=xlQualityStandard
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, fileName:=folderPath & "\" & pdfFileName, Quality:=xlQualityStandard
     
     ' Prompt for master coil numbers
     For i = 1 To 6
@@ -43,8 +43,26 @@ Sub CreatePDFAndCopyFolders()
         If masterCoilNumbers(i) = "" Then Exit For
         If fso.FolderExists(sourceFolderPath & "MC-" & masterCoilNumbers(i)) Then
             fso.CopyFolder sourceFolderPath & "MC-" & masterCoilNumbers(i), destinationFolderPath
+            
+            ' Copy corresponding master coil documents from MTR Bulk folder
+            Dim mtrBulkFolderPath As String
+            Dim mtrDocumentPath As String
+            mtrBulkFolderPath = "P:\NEXTracker Documentation\MTR Bulk\"
+            
+            ' Loop through files in MTR Bulk folder
+            Dim fileName As String
+            fileName = Dir(mtrBulkFolderPath & "MTR-MC-" & masterCoilNumbers(i) & "*.pdf")
+            
+            Do While fileName <> ""
+                fso.CopyFile mtrBulkFolderPath & fileName, destinationFolderPath & fileName
+                fileName = Dir
+            Loop
         End If
     Next i
     
+    MsgBox "PDF saved, folders copied, and master coil documents copied successfully!"
+End Sub
+
+
     MsgBox "PDF saved and folders copied successfully!"
 End Sub
