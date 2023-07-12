@@ -1,0 +1,50 @@
+Sub CreatePDFAndCopyFolders()
+    Dim projectName As String
+    Dim poNumber As String
+    Dim loadNumber As String
+    Dim folderPath As String
+    Dim pdfFileName As String
+    Dim masterCoilNumbers(1 To 6) As String
+    Dim i As Integer
+    
+    ' Get project information from cells
+    projectName = Range("E26").Value
+    poNumber = Range("E27").Value
+    loadNumber = Range("E28").Value
+    
+    ' Create folder path
+    folderPath = "P:\NEXTracker Documentation\" & projectName & "\PO-" & poNumber & "\LD-" & loadNumber
+    
+    ' Create folder if it doesn't exist
+    If Dir(folderPath, vbDirectory) = "" Then
+        MkDir folderPath
+    End If
+    
+    ' Save active sheet as PDF
+    pdfFileName = "Certificate of Compliance LD-" & loadNumber & " - " & Format(Date, "mmddyyyy")
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:=folderPath & "\" & pdfFileName, Quality:=xlQualityStandard
+    
+    ' Prompt for master coil numbers
+    For i = 1 To 6
+        masterCoilNumbers(i) = InputBox("Enter Master Coil Number " & i & " (Leave blank to stop input):")
+        If masterCoilNumbers(i) = "" Then Exit For
+    Next i
+    
+    ' Copy folders to LD-load number folder
+    Dim sourceFolderPath As String
+    Dim destinationFolderPath As String
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    sourceFolderPath = "P:\QualityControl\NEXTracker\Ongoing Inspections\"
+    destinationFolderPath = folderPath & "\"
+    
+    For i = 1 To 6
+        If masterCoilNumbers(i) = "" Then Exit For
+        If fso.FolderExists(sourceFolderPath & "MC-" & masterCoilNumbers(i)) Then
+            fso.CopyFolder sourceFolderPath & "MC-" & masterCoilNumbers(i), destinationFolderPath
+        End If
+    Next i
+    
+    MsgBox "PDF saved and folders copied successfully!"
+End Sub
